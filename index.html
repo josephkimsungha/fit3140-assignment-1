@@ -15,7 +15,9 @@
       })
 
       socket.on("move", a => {
-        $(`#${a}`).text("X");
+        a.map((letter, index) => {
+          $(`#${index}`).text(letter ? letter : "{empty}");
+        });
       })
     });
   </script>
