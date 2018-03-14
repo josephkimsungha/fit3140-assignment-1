@@ -14,51 +14,72 @@
         socket.emit("move", this.id);
       })
 
-      socket.on("move", a => {
-        a.map((letter, index) => {
-          $(`#${index}`).text(letter ? letter : "{empty}");
-        });
+      socket.on("move", (moveId, player) => {
+        $(`#${moveId}`).text(player);
       })
+
+      socket.on("start", () => {
+        $("#gameBoard").css("visibility", "visible");
+        $(".image.waiting").transition("remove looping")
+        $("#waiting").css("visibility", "collapse");
+      })
+
+      $(".image.waiting").transition("set looping").transition({
+        animation: "tada",
+        duration: 4000
+      });
     });
   </script>
 
-
-  <div class="ui segment">
-    <div class="ui two column center aligned centered grid">
-      <div class="ui six column centered row">
-        <div class="center aligned column square" id="0">
-          lots and lots and lots and lots and lots and lots of text
+  <h1 class="ui center aligned header">Tic Tac Toe</h1>
+  <div class="ui grid container" id="gameBoard">
+    <div class="five wide column"></div>
+    <div class="six wide column">
+      <div class="ui internally celled grid">
+        <div class="row">
+          <div class="center aligned five wide column square" id="0"></div>
+          <div class="center aligned six wide column square" id="1"></div>
+          <div class="center aligned five wide column square" id="2"></div>
         </div>
-        <div class="center aligned column square" id="1">
-          lots and lots and lots and lots and lots and lots of text
+        <div class="row">
+          <div class="center aligned five wide column square" id="3"></div>
+          <div class="center aligned six wide column square" id="4"></div>
+          <div class="center aligned five wide column square" id="5"></div>
         </div>
-        <div class="center aligned column square" id="2">
-          lots and lots and lots and lots and lots and lots of text
-        </div>
-      </div>
-      <div class="ui six column centered row">
-        <div class="center aligned column square" id="3">
-          lots and lots and lots and lots and lots and lots of text
-        </div>
-        <div class="center aligned column square" id="4">
-          lots and lots and lots and lots and lots and lots of text
-        </div>
-        <div class="center aligned column square" id="5">
-          lots and lots and lots and lots and lots and lots of text
-        </div>
-      </div>
-      <div class="ui six column centered row">
-        <div class="center aligned column square" id="6">
-          lots and lots and lots and lots and lots and lots of text
-        </div>
-        <div class="center aligned column square" id="7">
-          lots and lots and lots and lots and lots and lots of text
-        </div>
-        <div class="center aligned column square" id="8">
-          lots and lots and lots and lots and lots and lots of text
+        <div class="row">
+          <div class="center aligned five wide column square" id="6"></div>
+          <div class="center aligned six wide column square" id="7"></div>
+          <div class="center aligned five wide column square" id="8"></div>
         </div>
       </div>
     </div>
+    <div class="five wide column"></div>
   </div>
+
+  <div class="ui container" id="waiting">
+    <img class="ui centered medium circular image waiting" src="https://picsum.photos/400/?random" />
+    <h2 class="ui center aligned icon header">
+      <i class="search icon"></i>
+      <div class="content">
+        Searching for a game
+        <div class="sub header">Please enjoy this image from <a href="https://picsum.photos/" target="_blank">https://picsum.photos/</a></div>
+      </div>
+    </h2>
+  </div>
+
+  <style media="screen">
+    #gameBoard {
+      visibility: collapse;
+    }
+
+    .square {
+      min-height: 5em;
+    }
+
+    .square:hover {
+      background: #ccc;
+      cursor: pointer;
+    }
+  </style>
 </body>
 </html>
