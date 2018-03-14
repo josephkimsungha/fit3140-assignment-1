@@ -4,40 +4,55 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.9/semantic.min.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.9/semantic.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
+  <script>
+    $(function() {
+      const socket = io();
+      $(".square").click(function() {
+        socket.emit("move", this.id);
+      })
+
+      socket.on("move", a => {
+        $(`#${a}`).text("X");
+      })
+    });
+  </script>
+
+
   <div class="ui segment">
     <div class="ui two column center aligned centered grid">
       <div class="ui six column centered row">
-        <div class="center aligned column">
+        <div class="center aligned column square" id="0">
           lots and lots and lots and lots and lots and lots of text
         </div>
-        <div class="center aligned column">
+        <div class="center aligned column square" id="1">
           lots and lots and lots and lots and lots and lots of text
         </div>
-        <div class="center aligned column">
-          lots and lots and lots and lots and lots and lots of text
-        </div>
-      </div>
-      <div class="ui six column centered row">
-        <div class="center aligned column">
-          lots and lots and lots and lots and lots and lots of text
-        </div>
-        <div class="center aligned column">
-          lots and lots and lots and lots and lots and lots of text
-        </div>
-        <div class="center aligned column">
+        <div class="center aligned column square" id="2">
           lots and lots and lots and lots and lots and lots of text
         </div>
       </div>
       <div class="ui six column centered row">
-        <div class="center aligned column">
+        <div class="center aligned column square" id="3">
           lots and lots and lots and lots and lots and lots of text
         </div>
-        <div class="center aligned column">
+        <div class="center aligned column square" id="4">
           lots and lots and lots and lots and lots and lots of text
         </div>
-        <div class="center aligned column">
+        <div class="center aligned column square" id="5">
+          lots and lots and lots and lots and lots and lots of text
+        </div>
+      </div>
+      <div class="ui six column centered row">
+        <div class="center aligned column square" id="6">
+          lots and lots and lots and lots and lots and lots of text
+        </div>
+        <div class="center aligned column square" id="7">
+          lots and lots and lots and lots and lots and lots of text
+        </div>
+        <div class="center aligned column square" id="8">
           lots and lots and lots and lots and lots and lots of text
         </div>
       </div>
