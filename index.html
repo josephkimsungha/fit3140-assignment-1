@@ -8,8 +8,46 @@
 </head>
 <body>
   <script>
+    function drawCircle(canvas) {
+      const { width, height } = canvas;
+      const ctx = canvas.getContext("2d");
+      ctx.lineWidth = 7;
+      ctx.strokeStyle = "#0f0";
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.shadowBlur = 3;
+      ctx.shadowColor = "#0f0";
+
+      const x = width / 2;
+      const y = height / 2;
+      const radius = Math.min(width, height) * .3;
+      let progress = 0;
+
+      function animate(upTo) {
+        ctx.clearRect(0, 0, width, height);
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, upTo, false);
+        ctx.stroke();
+
+        if (progress < 100) {
+          progress += 2;
+          requestAnimationFrame(function() {
+            animate(Math.PI * 2 * progress / 100);
+          });
+        }
+      }
+
+      animate();
+     }
+
     $(function() {
       const socket = io();
+      $("canvas").each(function(index, thisElement) {
+        thisElement.height = 42; // NOTE hardcoded - might be able to make this better
+        thisElement.width = 42;
+        drawCircle(thisElement);
+      });
+
       $(".square").click(function() {
         socket.emit("move", this.id);
       })
@@ -37,19 +75,19 @@
     <div class="six wide column">
       <div class="ui internally celled grid">
         <div class="row">
-          <div class="center aligned five wide column square" id="0"></div>
-          <div class="center aligned six wide column square" id="1"></div>
-          <div class="center aligned five wide column square" id="2"></div>
+          <div class="center aligned five wide column square"><canvas id="0" width="500"></canvas></div>
+          <div class="center aligned six wide column square"><canvas id="1" width="500"></canvas></div>
+          <div class="center aligned five wide column square"><canvas id="2" width="500"></canvas></div>
         </div>
         <div class="row">
-          <div class="center aligned five wide column square" id="3"></div>
-          <div class="center aligned six wide column square" id="4"></div>
-          <div class="center aligned five wide column square" id="5"></div>
+          <div class="center aligned five wide column square"><canvas id="3" width="500"></canvas></div>
+          <div class="center aligned six wide column square"><canvas id="4" width="500"></canvas></div>
+          <div class="center aligned five wide column square"><canvas id="5" width="500"></canvas></div>
         </div>
         <div class="row">
-          <div class="center aligned five wide column square" id="6"></div>
-          <div class="center aligned six wide column square" id="7"></div>
-          <div class="center aligned five wide column square" id="8"></div>
+          <div class="center aligned five wide column square"><canvas id="6" width="500"></canvas></div>
+          <div class="center aligned six wide column square"><canvas id="7" width="500"></canvas></div>
+          <div class="center aligned five wide column square"><canvas id="8" width="500"></canvas></div>
         </div>
       </div>
     </div>
