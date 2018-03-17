@@ -38,29 +38,110 @@
       }
 
       animate();
-     }
+    }
+
+    function drawCross(canvas) {
+      const { width, height } = canvas;
+      const ctx = canvas.getContext("2d");
+      ctx.lineWidth = 7;
+      ctx.strokeStyle = "#f00";
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.shadowBlur = 3;
+      ctx.shadowColor = "#f00";
+
+      const radius = Math.min(width, height) * .3;
+      const x1 = width / 2 - radius;
+      const y1 = height / 2 - radius;
+      const x2 = width / 2 + radius;
+      const y2 = height / 2 - radius;
+      let progress = 0;
+
+      function animate(upTo) {
+        ctx.clearRect(0, 0, width, height);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 + upTo, y1 + upTo);
+        ctx.stroke();
+
+        if (progress < 100) {
+          progress += 4;
+          requestAnimationFrame(function() {
+            animate(2 * radius * progress / 100);
+          });
+        } else {
+          progress = 0;
+          requestAnimationFrame(function() {
+            animate2();
+          });
+        }
+      }
+
+      function animate2(upTo) {
+        ctx.clearRect(0, 0, width, height);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 + 2 * radius, y1 + 2 * radius);
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - upTo, y2 + upTo);
+        ctx.stroke();
+
+        if (progress < 100) {
+          progress += 4;
+          requestAnimationFrame(function() {
+            animate2(2 * radius * progress / 100);
+          });
+        }
+      }
+
+      animate();
+    }
 
     $(function() {
       const socket = io();
       $("canvas").each(function(index, thisElement) {
         thisElement.height = 42; // NOTE hardcoded - might be able to make this better
         thisElement.width = 42;
-        drawCircle(thisElement);
       });
 
       $(".square").click(function() {
-        socket.emit("move", this.id);
-      })
-
-      socket.on("move", (moveId, player) => {
-        $(`#${moveId}`).text(player);
-      })
+        $("#message").text("Waiting for opponent...");
+        $("#gameBoard").removeClass("active").addClass("disabled");
+        socket.emit("move", this.children[0].id);
+      });
 
       socket.on("start", () => {
-        $("#gameBoard").css("visibility", "visible");
+        $("#playArea").css("visibility", "visible");
         $(".image.waiting").transition("remove looping")
         $("#waiting").css("visibility", "collapse");
-      })
+        $("#gameBoard").removeClass("active").addClass("disabled");
+        $("#message").text("Your game has begun! Please wait for your turn...");
+      });
+
+      socket.on("move", (moveId, player) => {
+        if (player == 1) {
+          drawCross(document.getElementById(moveId));
+        } else {
+          drawCircle(document.getElementById(moveId));
+        }
+      });
+
+      socket.on("notPlaying", () => {
+        $("#message").text("The game has finished. Please click on the reset button to start again.");
+      });
+
+      socket.on("wrongTurn", () => {
+        $("#message").text("It isn't your turn. Please wait patiently...");
+      });
+
+      socket.on("alreadyPlayed", () => {
+        $("#message").text("Please select an empty tile.");
+      });
+
+      socket.on("newTurn", () => {
+        $("#gameBoard").removeClass("disabled").addClass("active");
+        $("#message").text("It's your turn! Click on a tile above.");
+      });
 
       $(".image.waiting").transition("set looping").transition({
         animation: "tada",
@@ -70,28 +151,32 @@
   </script>
 
   <h1 class="ui center aligned header">Tic Tac Toe</h1>
-  <div class="ui grid container" id="gameBoard">
+  <div class="ui grid center aligned container" id="playArea">
     <div class="five wide column"></div>
     <div class="six wide column">
-      <div class="ui internally celled grid">
-        <div class="row">
-          <div class="center aligned five wide column square"><canvas id="0" width="500"></canvas></div>
-          <div class="center aligned six wide column square"><canvas id="1" width="500"></canvas></div>
-          <div class="center aligned five wide column square"><canvas id="2" width="500"></canvas></div>
-        </div>
-        <div class="row">
-          <div class="center aligned five wide column square"><canvas id="3" width="500"></canvas></div>
-          <div class="center aligned six wide column square"><canvas id="4" width="500"></canvas></div>
-          <div class="center aligned five wide column square"><canvas id="5" width="500"></canvas></div>
-        </div>
-        <div class="row">
-          <div class="center aligned five wide column square"><canvas id="6" width="500"></canvas></div>
-          <div class="center aligned six wide column square"><canvas id="7" width="500"></canvas></div>
-          <div class="center aligned five wide column square"><canvas id="8" width="500"></canvas></div>
+      <div class="ui segment" id="gameBoard">
+        <div class="ui internally celled grid">
+          <div class="row">
+            <div class="center aligned five wide column square"><canvas id="0" width="500"></canvas></div>
+            <div class="center aligned six wide column square"><canvas id="1" width="500"></canvas></div>
+            <div class="center aligned five wide column square"><canvas id="2" width="500"></canvas></div>
+          </div>
+          <div class="row">
+            <div class="center aligned five wide column square"><canvas id="3" width="500"></canvas></div>
+            <div class="center aligned six wide column square"><canvas id="4" width="500"></canvas></div>
+            <div class="center aligned five wide column square"><canvas id="5" width="500"></canvas></div>
+          </div>
+          <div class="row">
+            <div class="center aligned five wide column square"><canvas id="6" width="500"></canvas></div>
+            <div class="center aligned six wide column square"><canvas id="7" width="500"></canvas></div>
+            <div class="center aligned five wide column square"><canvas id="8" width="500"></canvas></div>
+          </div>
         </div>
       </div>
     </div>
     <div class="five wide column"></div>
+
+    <h3 class="ui header" id="message">Your game has begun. Please make a move.</h3>
   </div>
 
   <div class="ui container" id="waiting">
@@ -106,7 +191,8 @@
   </div>
 
   <style media="screen">
-    #gameBoard {
+    #playArea {
+      padding-top: 40px;
       visibility: collapse;
     }
 
@@ -114,7 +200,7 @@
       min-height: 5em;
     }
 
-    .square:hover {
+    .active .square:hover {
       background: #ccc;
       cursor: pointer;
     }
