@@ -107,25 +107,28 @@ io.on("connection", socket => {
 
     socket.on("resetRequest", () => {
       const { roomNumber, playerNumber } = roomsReference[socket.id];
-      roomsReference[socket.id].resetStatus = "pending";
+      gameBoards[roomNumber].resetStatus = "pending";
 
       socket.to(roomNumber).emit("resetRequest");
     });
 
     socket.on("resetResponse", accepted => {
       const { roomNumber, playerNumber } = roomsReference[socket.id];
-      if (accepted) {
-        gameBoards[roomNumber] = { board: new Array(9), playerTurn: 1, status: "playing" };
-        io.to(roomNumber).emit("reset");
-        // player one must start
-        if (playerNumber == 1) {
-          io.to(socket.id).emit("newTurn");
+      if (gameBoards[roomNumber].resetStatus == "pending") {
+        if (accepted) {
+          gameBoards[roomNumber] = { board: new Array(9), playerTurn: 1, status: "playing" };
+          io.to(roomNumber).emit("reset");
+          // player one must start
+          if (playerNumber == 1) {
+            io.to(socket.id).emit("newTurn");
+          } else {
+            socket.to(roomNumber).emit("newTurn");
+          }
         } else {
-          socket.to(roomNumber).emit("newTurn");
+          socket.to(roomNumber).emit("resetRejected");
         }
-      } else {
-        socket.to(roomNumber).emit("resetRejected");
       }
+      gameBoards[roomNumber].resetStatus = null;
     });
   });
 })
