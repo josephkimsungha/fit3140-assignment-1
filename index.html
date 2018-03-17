@@ -97,6 +97,12 @@
       animate();
     }
 
+    function clearCanvas(canvas) {
+      const { width, height } = canvas;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, width, height);
+    }
+
     $(function() {
       const socket = io();
       $("canvas").each(function(index, thisElement) {
@@ -110,10 +116,34 @@
         socket.emit("move", this.children[0].id);
       });
 
+      $("#resetButton").click(function() {
+        socket.emit("resetRequest");
+        $('.ui.basic.modal.confirmation').modal({
+          closable: false
+        }).modal('show');
+      });
+
+      $(".ui.basic.negative.button").click(function() {
+        socket.emit("resetResponse", false);
+      });
+
+      $(".ui.basic.positive.button").click(function() {
+        socket.emit("resetResponse", true);
+      });
+
       socket.on("start", () => {
         $("#playArea").css("visibility", "visible");
         $(".image.waiting").transition("remove looping")
         $("#waiting").css("visibility", "collapse");
+        $("#gameBoard").removeClass("active").addClass("disabled");
+        $("#message").text("Your game has begun! Please wait for your turn...");
+      });
+
+      socket.on("reset", () => {
+        $('.ui.basic.modal.confirmation').modal('hide');
+        $("canvas").each(function(index, thisElement) {
+          clearCanvas(thisElement);
+        });
         $("#gameBoard").removeClass("active").addClass("disabled");
         $("#message").text("Your game has begun! Please wait for your turn...");
       });
@@ -141,6 +171,29 @@
       socket.on("newTurn", () => {
         $("#gameBoard").removeClass("disabled").addClass("active");
         $("#message").text("It's your turn! Click on a tile above.");
+      });
+
+      socket.on("win", () => {
+        $("#message").text("Congratulations! You win.");
+      });
+
+      socket.on("lose", () => {
+        $("#message").text("Better luck next time!");
+      });
+
+      socket.on("draw", () => {
+        $("#message").text("It's a tie!");
+      });
+
+      socket.on("resetRequest", () => {
+        $('.ui.basic.modal.request').modal({
+          closable: false
+        }).modal('show');
+      });
+
+      socket.on("resetRejected", () => {
+        $('.ui.basic.modal.confirmation').modal('hide');
+        $("#message").text("Opponent refused to reset.");
       });
 
       $(".image.waiting").transition("set looping").transition({
@@ -176,7 +229,19 @@
     </div>
     <div class="five wide column"></div>
 
-    <h3 class="ui header" id="message">Your game has begun. Please make a move.</h3>
+    <div class="ui basic segment">
+      <h3 class="ui header" id="message">Your game has begun. Please make a move.</h3>
+
+      <div class="ui basic segment">
+        <div class="ui animated button" tabindex="0" id="resetButton">
+          <div class="visible content">Reset</div>
+          <div class="hidden content">
+            <i class="undo icon"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <div class="ui container" id="waiting">
@@ -188,6 +253,32 @@
         <div class="sub header">Please enjoy this image from <a href="https://picsum.photos/" target="_blank">https://picsum.photos/</a></div>
       </div>
     </h2>
+  </div>
+
+  <div class="ui basic modal request">
+    <div class="header">
+      Reset Request
+    </div>
+    <div class="content">
+      <p>Your opponent has asked to start a new game. Do you accept?</p>
+    </div>
+    <div class="actions">
+      <div class="ui basic negative button">
+        No
+      </div>
+      <div class="ui basic positive button">
+        Yes
+      </div>
+    </div>
+  </div>
+
+  <div class="ui basic modal confirmation">
+    <div class="header">
+      Reset Request
+    </div>
+    <div class="content">
+      <p>A request has been made to your opponent. Please wait for their response...</p>
+    </div>
   </div>
 
   <style media="screen">

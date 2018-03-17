@@ -87,21 +87,44 @@ io.on("connection", socket => {
             // check if the move was a winning move or game has ended in a tie
             switch (checkBoard(board, playerNumber)) {
               case "win":
-              gameBoards[roomNumber].status = "finished";
-              console.log("win!");
-              break;
+                gameBoards[roomNumber].status = "finished";
+                io.to(socket.id).emit("win");
+                socket.to(roomNumber).emit("lose");
+                break;
               case "draw":
-              gameBoards[roomNumber].status = "finished";
-              console.log("draw");
-              break;
+                gameBoards[roomNumber].status = "finished";
+                io.to(roomNumber).emit("draw");
+                break;
               default:
-              console.log("changing turn");
-              // change turn
-              gameBoards[roomNumber].playerTurn = 1 + playerTurn % 2;
-              socket.to(roomNumber).emit("newTurn");
+                // change turn
+                gameBoards[roomNumber].playerTurn = 1 + playerTurn % 2;
+                socket.to(roomNumber).emit("newTurn");
             }
           }
         }
+      }
+    });
+
+    socket.on("resetRequest", () => {
+      const { roomNumber, playerNumber } = roomsReference[socket.id];
+      roomsReference[socket.id].resetStatus = "pending";
+
+      socket.to(roomNumber).emit("resetRequest");
+    });
+
+    socket.on("resetResponse", accepted => {
+      const { roomNumber, playerNumber } = roomsReference[socket.id];
+      if (accepted) {
+        gameBoards[roomNumber] = { board: new Array(9), playerTurn: 1, status: "playing" };
+        io.to(roomNumber).emit("reset");
+        // player one must start
+        if (playerNumber == 1) {
+          io.to(socket.id).emit("newTurn");
+        } else {
+          socket.to(roomNumber).emit("newTurn");
+        }
+      } else {
+        socket.to(roomNumber).emit("resetRejected");
       }
     });
   });
