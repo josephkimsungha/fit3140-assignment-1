@@ -41,12 +41,21 @@ app.get("/", function(req, res){
   res.sendFile(__dirname + "/index.html");
 });
 
-let roomNumber = 0;
+let roomQueue = [1, 1, 2, 2, 3, 3]; // TODO make the rooms be a queue of [0, 0, 1, 1, 2, 2] etc. pop out a number when putting a player in. Push it back in when they disconnect. Add more numbers if you run out
 const roomsReference = {};
 const gameBoards = {};
 
 io.on("connection", socket => {
-  if (io.sockets.adapter.rooms[roomNumber] && io.sockets.adapter.rooms[roomNumber].length > 1) roomNumber++;
+  roomQueue.sort().reverse();
+  const roomNumber = roomQueue.pop();
+  if (roomQueue.length < 5) {
+    const highestRoom = Math.max(...roomQueue, ...Object.keys(io.sockets.adapter.rooms).filter(room => Number(room)));
+    for (let i = 1; i < 4; i++) {
+      roomQueue.push(highestRoom + i);
+      roomQueue.push(highestRoom + i);
+    }
+  }
+  console.log(roomQueue);
   socket.join(roomNumber, () => {
     const playerNumber = io.sockets.adapter.rooms[roomNumber].length;
     roomsReference[socket.id] = { roomNumber, playerNumber };
@@ -129,6 +138,25 @@ io.on("connection", socket => {
         }
       }
       gameBoards[roomNumber].resetStatus = null;
+    });
+
+    socket.on("disconnect", () => {
+      console.log(`${socket.id} disconnected.`);
+      const { roomNumber, playerNumber } = roomsReference[socket.id];
+
+      gameBoards[roomNumber] = { board: new Array(9), playerTurn: 1, status: "waiting" };
+      socket.to(roomNumber).emit("reset");
+      socket.to(roomNumber).emit("lostConnection"); // TODO
+
+      // if the other player was player 2, they are now player 1
+      if (playerNumber == 1 && io.sockets.adapter.rooms[roomNumber]) {
+        const otherPlayerId = Object.keys(io.sockets.adapter.rooms[roomNumber].sockets)[0];
+        roomsReference[otherPlayerId].playerNumber = 1;
+        console.log(`${otherPlayerId} has been promoted to player 1 of room #${roomNumber}.`);
+      }
+
+      // push the roomNumber back into the queue
+      roomQueue.push(roomNumber);
     });
   });
 })

@@ -112,7 +112,6 @@
 
       $(".square").click(function() {
         $("#message").text("Waiting for opponent...");
-        $("#gameBoard").removeClass("active").addClass("disabled");
         socket.emit("move", this.children[0].id);
       });
 
@@ -149,6 +148,7 @@
       });
 
       socket.on("move", (moveId, player) => {
+        $("#gameBoard").removeClass("active").addClass("disabled");
         if (player == 1) {
           drawCross(document.getElementById(moveId));
         } else {
@@ -194,6 +194,16 @@
       socket.on("resetRejected", () => {
         $('.ui.basic.modal.confirmation').modal('hide');
         $("#message").text("Opponent refused to reset.");
+      });
+
+      socket.on("lostConnection", () => {
+        $("#playArea").css("visibility", "collapse");
+        $(".image.waiting").transition("set looping").transition({
+          animation: "tada",
+          duration: 4000
+        });
+        $("#waiting").css("visibility", "visible");
+        $("#waitingMessage").text("Lost connection with your opponent. Please wait for a new game.");
       });
 
       $(".image.waiting").transition("set looping").transition({
@@ -248,7 +258,7 @@
     <img class="ui centered medium circular image waiting" src="https://picsum.photos/400/?random" />
     <h2 class="ui center aligned icon header">
       <i class="search icon"></i>
-      <div class="content">
+      <div class="content" id="waitingMessage">
         Searching for a game
         <div class="sub header">Please enjoy this image from <a href="https://picsum.photos/" target="_blank">https://picsum.photos/</a></div>
       </div>
