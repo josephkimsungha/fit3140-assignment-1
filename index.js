@@ -30,6 +30,7 @@ function checkBoard(board, playerNumber) {
     return "win";
   }
 
+  // if the board is filled, but no win condition is met, it is a draw
   if (!board.includes(undefined)) {
     return "draw";
   }
@@ -41,13 +42,19 @@ app.get("/", function(req, res){
   res.sendFile(__dirname + "/index.html");
 });
 
-let roomQueue = [1, 1, 2, 2, 3, 3]; // TODO make the rooms be a queue of [0, 0, 1, 1, 2, 2] etc. pop out a number when putting a player in. Push it back in when they disconnect. Add more numbers if you run out
+// the rooms will be a queue of [0, 0, 1, 1, 2, 2] etc.
+// pop out a number when putting a player in.
+// push it back in when they disconnect.
+// add more numbers if you run out
+let roomQueue = [1, 1, 2, 2, 3, 3];
 const roomsReference = {};
 const gameBoards = {};
 
 io.on("connection", socket => {
   roomQueue.sort().reverse();
   const roomNumber = roomQueue.pop();
+
+  // make sure there's always adequate rooms left in the queue, in case multiple people join at once
   if (roomQueue.length < 5) {
     const highestRoom = Math.max(...roomQueue, ...Object.keys(io.sockets.adapter.rooms).filter(room => Number(room)));
     for (let i = 1; i < 4; i++) {
@@ -55,11 +62,12 @@ io.on("connection", socket => {
       roomQueue.push(highestRoom + i);
     }
   }
-  console.log(roomQueue);
+
   socket.join(roomNumber, () => {
     const playerNumber = io.sockets.adapter.rooms[roomNumber].length;
     roomsReference[socket.id] = { roomNumber, playerNumber };
-    console.log(`${socket.id} joined room #${roomNumber} as player ${playerNumber}`); // When player 1 leaves, player 2 needs to be set to player 1 somehow
+    console.log(`${socket.id} joined room #${roomNumber} as player ${playerNumber}`);
+    // NOTE when player 1 leaves, player 2 needs to be set to player 1 somehow
 
     if (!gameBoards[roomNumber]) {
       gameBoards[roomNumber] = { board: new Array(9), playerTurn: 1, status: "waiting" };
@@ -67,6 +75,7 @@ io.on("connection", socket => {
     }
 
     if (io.sockets.adapter.rooms[roomsReference[socket.id].roomNumber].length > 1) {
+      // game is ready to begin
       io.to(roomsReference[socket.id].roomNumber).emit("start");
       socket.to(roomsReference[socket.id].roomNumber).emit("newTurn");
       gameBoards[roomsReference[socket.id].roomNumber].status = "playing";
